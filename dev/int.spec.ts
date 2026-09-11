@@ -222,6 +222,88 @@ describe('Plugin integration tests', () => {
     ).rejects.toThrow()
   })
 
+  test('queued job can be drained immediately via runByID after approval (dev path)', async () => {
+    const admin = await createUser(['admin'], 'runbyid-admin')
+    const target = await createUser(['user'], 'runbyid-target')
+
+    const address = await payload.create({
+      collection: 'user-addresses',
+      data: {
+        addressLine1: '77 Dev Lane',
+        city: 'Dev Town',
+        postalCode: '11111',
+        user: target.id,
+      },
+    })
+
+    const request = await payload.create({
+      collection: 'anonymization-requests',
+      data: {
+        requestedBy: admin.id,
+        user: target.id,
+      },
+      overrideAccess: false,
+      user: admin,
+    })
+
+    // Approving queues the job WITHOUT `req`, so it is committed immediately
+    // and visible to any runner (this is the key fix - the job is no longer
+    // created inside the still-uncommitted update transaction).
+    await payload.update({
+      collection: 'anonymization-requests',
+      data: { status: 'approved' },
+      id: request.id,
+      overrideAccess: false,
+      user: admin,
+    })
+
+    const { docs: queuedJobs } = await payload.find({
+      collection: 'payload-jobs',
+      where: {
+        and: [
+          { taskSlug: { equals: 'anonymizeDataTask' } },
+          { processing: { equals: false } },
+          { completedAt: { exists: false } },
+        ],
+      },
+      limit: 1,
+      overrideAccess: true,
+      depth: 0,
+    })
+    expect(queuedJobs.length).toBe(1)
+
+    // In development the hook defers this call until after the outer update
+    // transaction has committed. Here we call it directly (transaction is
+    // already committed) to prove it finds and runs the job.
+    await payload.jobs.runByID({ id: queuedJobs[0].id })
+
+    const anonymizedUser = await payload.findByID({
+      collection: 'users',
+      id: target.id,
+    })
+    const anonymizedAddress = await payload.findByID({
+      collection: 'user-addresses',
+      id: address.id,
+    })
+    const completedRequest = await payload.findByID({
+      collection: 'anonymization-requests',
+      id: request.id,
+      depth: 0,
+    })
+
+    expect(anonymizedUser).toMatchObject({
+      address: null,
+      name: expect.stringMatching(/^Anonymous User /),
+    })
+    expect((anonymizedUser as { isAnonymized?: boolean }).isAnonymized).toBe(true)
+    expect(anonymizedAddress).toMatchObject({
+      addressLine1: null,
+      city: null,
+      postalCode: null,
+    })
+    expect(completedRequest.status).toBe('completed')
+  })
+
   test('anonymized documents are hidden from reads unless isAnonymized is false/undefined', async () => {
     const target = await createUser(['user'], 'masked')
 

@@ -125,6 +125,23 @@ can be literals or functions receiving the generated `anonymousId`. The
 identity record stores the user ID, affected collections, documents, and
 masked field names.
 
+### How the masking job runs
+
+Approving a request queues an `anonymizeDataTask` job. The job row is committed
+immediately (outside the approval transaction) so it is visible to any runner.
+
+- **Development (`NODE_ENV=development`)** — the approval hook defers a
+  `payload.jobs.runByID(...)` call by ~1.5 seconds (long enough for the outer
+  approval transaction to commit), so masking starts almost immediately after
+  an admin clicks *Approve*. If that run fails, the job is retried automatically.
+- **Production** — queued jobs are drained either by your own scheduler (e.g. a
+  system cron hitting `/api/payload-jobs/run`, or `payload run-schedules`), by
+  the admin Jobs panel, or by the plugin's `autoRun` cron (`* * * * *` by
+  default, see the `jobs` option).
+
+A safety check in the task refuses to mask when the request is no longer
+`approved`/`processing` (e.g. the approval transaction was rolled back).
+
 ### Anonymized? checkbox & read protection
 
 Every collection listed under `collections` is automatically augmented with an

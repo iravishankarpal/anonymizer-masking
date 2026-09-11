@@ -42,23 +42,43 @@ export const createAnonymizeApprovedRequest = (
       },
     })
 
-    // Queue the background job to perform the heavy lifting
-    let job = await req.payload.jobs.queue({
+    // Queue the background job to perform the heavy lifting.
+    // NOTE: do NOT pass `req` here. The job row must be committed on its own
+    // connection so it is immediately visible to any runner. If it were queued
+    // inside the outer (still uncommitted) update transaction, a subsequent
+    // `jobs.runByID()` would not be able to find it and would silently no-op.
+    const job = await req.payload.jobs.queue({
       task: 'anonymizeDataTask',
       input: {
         requestId: String(doc.id),
         encryptionKey: metadataConfig?.encryptionKey,
         metadataEnabled: metadataConfig?.enabled === true,
       },
-      req,
     })
 
     console.log(`✓ Anonymization job queued for request ${doc.id}`)
-    if (process.env.NODE_ENV === "development") {
-      await req.payload.jobs.runByID({
-        id: job.id,
-        req,
-      })
+
+    // In development we want the job to run right away. It cannot run
+    // synchronously from inside this hook:
+    //
+    //  1. the outer update transaction has not committed yet, so the job row
+    //     would not be visible to a runner on another connection, and
+    //  2. the outer transaction still holds a row-lock on the request
+    //     document, so the task's own UPDATE of that row (status →
+    //     'completed') would deadlock.
+    //
+    // Defer the drain until the outer transaction has committed. The job row
+    // itself is already committed (no `req` above), so the runner will find
+    // it.
+    if (process.env.NODE_ENV === 'development') {
+      setTimeout(() => {
+        void req.payload.jobs
+          .runByID({ id: job.id })
+          .catch((error: unknown) => {
+            const errorMessage = error instanceof Error ? error.message : String(error)
+            console.error(`✗ Failed to run queued anonymization job: ${errorMessage}`)
+          })
+      }, 1500)
     }
     return doc
   } catch (error) {

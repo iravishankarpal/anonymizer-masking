@@ -88,6 +88,19 @@ export const createAnonymizeTask = (
                 throw new Error(`Anonymization request ${requestId} not found`)
             }
 
+            // Safety net: only mask data for requests that are (or were just)
+            // approved. If the approval transaction was rolled back after the
+            // job was queued (e.g. the admin update failed), the request would
+            // still be 'pending' here and we must NOT anonymize anything.
+            if (
+                requestRecord.status !== 'approved' &&
+                requestRecord.status !== 'processing'
+            ) {
+                throw new Error(
+                    `Anonymization request ${requestId} is not approved (current status: ${requestRecord.status})`,
+                )
+            }
+
             const userId =
                 typeof requestRecord.user === 'object' ? requestRecord.user.id : requestRecord.user
 
