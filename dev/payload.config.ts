@@ -2,8 +2,8 @@ import { postgresAdapter } from '@payloadcms/db-postgres'
 
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
+import { adminOnly, anonymizerMasking } from 'anonymizer-masking'
 import { buildConfig } from 'payload'
-import { anonymizerMasking } from 'anonymizer-masking'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
@@ -96,6 +96,23 @@ export default buildConfig({
     anonymizerMasking({
       metadata: {
         enabled: true,
+      },
+      // The `user` and `approvedBy` relationship fields on the plugin-managed
+      // `anonymization-requests` collection are fully configurable instead of
+      // being hard-coded to `'users'`. Both default to `'users'` when omitted;
+      // point them at a custom collection if yours differs.
+      requests: {
+        userRelationTo: 'users',
+        approvedByRelationTo: 'users',
+      },
+      // The admin gate for every admin-only operation the plugin registers.
+      // `adminOnly` (exported by the plugin) is the default implementation; it
+      // is NOT hard-coded — swap in any `Access` function here (e.g. one from
+      // a gatekeeper plugin or your own RBAC) to replace the built-in
+      // `roles.includes('admin')` check everywhere: requests, logs, keys and
+      // the `isAnonymized` field.
+      access: {
+        admin: adminOnly,
       },
       collections: {
         users: {

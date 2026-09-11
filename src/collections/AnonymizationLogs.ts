@@ -1,19 +1,21 @@
-import type { CollectionConfig } from 'payload'
+import type { Access, CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly.js'
 
-export const AnonymizationLogs: CollectionConfig = {
+export const createAnonymizationLogsCollection = (
+    defaultAdmin: Access = adminOnly,
+): CollectionConfig => ({
     slug: 'anonymization-logs',
     admin: {
         defaultColumns: ['request', 'status', 'totalCollections', 'totalDocuments', 'startedAt'],
         useAsTitle: 'status',
     },
     access: {
-        admin: adminOnly,
-        create: adminOnly,
-        delete: adminOnly,
-        read: adminOnly,
-        update: adminOnly,
+        admin: defaultAdmin,
+        create: defaultAdmin,
+        delete: defaultAdmin,
+        read: defaultAdmin,
+        update: defaultAdmin,
     },
     fields: [
         {
@@ -74,4 +76,4 @@ export const AnonymizationLogs: CollectionConfig = {
             type: 'textarea',
         },
     ],
-}
+})
