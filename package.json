@@ -1,5 +1,5 @@
 {
-  "name": "anonymizer-masking",
+  "name": "@payload-pln/anonymizer-masking",
   "version": "1.0.0",
   "description": "A blank template to get started with Payload 3.0",
   "license": "MIT",
@@ -32,7 +32,8 @@
     "lint:fix": "eslint ./src --fix",
     "test": "pnpm test:int && pnpm test:e2e",
     "test:e2e": "playwright test",
-    "test:int": "vitest"
+    "test:int": "vitest",
+    "npm:up": "pnpm build && npm publish --access public"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
