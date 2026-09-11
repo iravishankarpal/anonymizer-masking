@@ -162,7 +162,12 @@ export const createAnonymizeTask = (
                     for (const collectionDocument of collectionDocuments.docs) {
                         await req.payload.update({
                             collection: collection as CollectionSlug,
-                            data: maskedData,
+                            // Mark the document as anonymized so the read access
+                            // guard hides it from all public/admin reads.
+                            data: {
+                                ...maskedData,
+                                isAnonymized: true,
+                            },
                             id: collectionDocument.id,
                             overrideAccess: true,
                             req: transactionReq,

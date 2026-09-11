@@ -1,12 +1,14 @@
 import { randomBytes } from 'node:crypto'
 
-import type { Config } from 'payload'
+import type { Access, AccessResult, CollectionConfig, Config } from 'payload'
 
+import { anonymizedRead } from './access/anonymizedRead.js'
 import { AnonymizationRequests } from './collections/AnonymizationRequests.js'
 import { AnonymizedIdentities } from './collections/AnonymizedIdentities.js'
 import { AnonymizationLogs } from './collections/AnonymizationLogs.js'
 import { AnonymizationKey } from './collections/AnonymizationKey.js'
 import { AnonymizationMetadata } from './collections/AnonymizationMetadata.js'
+import { isAnonymizedField } from './fields/isAnonymized.js'
 import { createAnonymizeApprovedRequest } from './hooks/anonymizeApprovedRequest.js'
 import { createAnonymizeTask } from './tasks/anonymizeTask.js'
 
@@ -96,6 +98,59 @@ export type AnonymizerMaskingConfig = {
 
 const DEFAULT_AUTORUN_CRON = '* * * * *'
 
+/**
+ * Combine two `AccessResult` values using AND logic.
+ *
+ * - `false`/falsy (incl. `null`/`undefined`) acts as a deny.
+ * - `true` is neutral (returns the other constraint).
+ * - Two `Where` constraints are wrapped in `and`.
+ */
+const andAccessResults = (a: AccessResult, b: AccessResult): AccessResult => {
+  if (a === false || a === null || a === undefined) return false
+  if (b === false || b === null || b === undefined) return false
+  if (a === true) return b
+  if (b === true) return a
+  return { and: [a, b] }
+}
+
+/**
+ * Combine an existing `read` access with the anonymized guard using AND logic.
+ * The pre-existing access result is preserved (boolean or query constraint)
+ * and ANDed with the guard's constraint.
+ */
+const guardReadAccess = (existing: Access | undefined, guard: Access): Access => {
+  if (!existing) return guard
+  return async (args) => {
+    const existingResult = await existing(args)
+    const guardResult = await guard(args)
+    return andAccessResults(existingResult, guardResult)
+  }
+}
+
+/** Inject the `isAnonymized` field + read guard into every configured collection. */
+const applyAnonymizationGuards = (config: Config, configuredCollections: Record<string, unknown>) => {
+  for (const slug of Object.keys(configuredCollections)) {
+    const collection = config.collections?.find(
+      (c): c is CollectionConfig => typeof c === 'object' && c !== null && c.slug === slug,
+    )
+    if (!collection) continue
+
+    // 1. Inject the `isAnonymized` checkbox field (if it isn't already present).
+    const fieldAlreadyPresent = collection.fields?.some(
+      (f) => typeof f === 'object' && 'name' in f && f.name === isAnonymizedField.name,
+    )
+    if (!fieldAlreadyPresent) {
+      collection.fields = [...(collection.fields || []), { ...isAnonymizedField }]
+    }
+
+    // 2. Guard `read` so anonymized documents are never exposed.
+    collection.access = {
+      ...collection.access,
+      read: guardReadAccess(collection.access?.read, anonymizedRead),
+    }
+  }
+}
+
 export const anonymizerMasking =
   (pluginOptions: AnonymizerMaskingConfig) =>
     (config: Config): Config => {
@@ -126,6 +181,10 @@ export const anonymizerMasking =
         config.collections.push(AnonymizationKey, AnonymizationMetadata)
       }
 
+      // Inject the `isAnonymized` checkbox + read guard into every configured
+      // collection so anonymized documents are never exposed on reads.
+      applyAnonymizationGuards(config, pluginOptions.collections)
+
       // Register the anonymization task in the jobs queue
       if (!config.jobs) {
         config.jobs = {}
@@ -139,7 +198,9 @@ export const anonymizerMasking =
 
       // Optional toggle for the Payload job system itself
       if (typeof pluginOptions.jobs?.enabled === 'boolean') {
-        config.jobs.enabled = pluginOptions.jobs.enabled
+        // `enabled` is applied during config sanitization but isn't declared on
+        // the raw `JobsConfig`, so cast to keep strict TS happy.
+        ;(config.jobs as { enabled?: boolean }).enabled = pluginOptions.jobs.enabled
       }
 
       // The auto-run cron is fully configurable via the plugin options.

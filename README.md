@@ -125,6 +125,32 @@ can be literals or functions receiving the generated `anonymousId`. The
 identity record stores the user ID, affected collections, documents, and
 masked field names.
 
+### Anonymized? checkbox & read protection
+
+Every collection listed under `collections` is automatically augmented with an
+**Anonymized?** checkbox (`isAnonymized`, default `false`). Only admins can
+toggle it, and the anonymization job sets it to `true` on every document it
+masks.
+
+The plugin also adds a read access guard to those collections: documents where
+`isAnonymized` is `true` are hidden from **all** reads (admin panel, REST,
+GraphQL, and the Local API unless `overrideAccess: true` is passed) — list
+queries, counts, and `findByID`. Documents where the flag is `false` or unset
+(`undefined`/`null`) remain readable.
+
+```ts
+// A document that has been anonymized can no longer be read:
+const user = await payload.findByID({
+  collection: 'users',
+  id: userId,
+  overrideAccess: false, // enforce access control
+})
+// throws NotFound for anonymized documents
+```
+
+Internal plugin operations (e.g. the `anonymizeDataTask`) use
+`overrideAccess: true` internally so anonymization keeps working end-to-end.
+
 Metadata storage is disabled by default. When `metadata` is omitted or
 `enabled: false`, no snapshot is stored.
 

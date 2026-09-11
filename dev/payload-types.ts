@@ -153,6 +153,10 @@ export interface User {
   phone?: string | null;
   address?: string | null;
   roles?: ('admin' | 'user')[] | null;
+  /**
+   * When enabled, this record is anonymized and hidden from reads.
+   */
+  isAnonymized?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -182,6 +186,10 @@ export interface UserAddress {
   addressLine1?: string | null;
   city?: string | null;
   postalCode?: string | null;
+  /**
+   * When enabled, this record is anonymized and hidden from reads.
+   */
+  isAnonymized?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -196,6 +204,10 @@ export interface UserCreditCard {
   cardNumber?: string | null;
   expiry?: string | null;
   cvv?: string | null;
+  /**
+   * When enabled, this record is anonymized and hidden from reads.
+   */
+  isAnonymized?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -209,6 +221,10 @@ export interface Transaction {
   paymentMethod?: string | null;
   amount?: number | null;
   privateNote?: string | null;
+  /**
+   * When enabled, this record is anonymized and hidden from reads.
+   */
+  isAnonymized?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -542,6 +558,7 @@ export interface UsersSelect<T extends boolean = true> {
   phone?: T;
   address?: T;
   roles?: T;
+  isAnonymized?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -568,6 +585,7 @@ export interface UserAddressesSelect<T extends boolean = true> {
   addressLine1?: T;
   city?: T;
   postalCode?: T;
+  isAnonymized?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -581,6 +599,7 @@ export interface UserCreditCardsSelect<T extends boolean = true> {
   cardNumber?: T;
   expiry?: T;
   cvv?: T;
+  isAnonymized?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -593,6 +612,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   paymentMethod?: T;
   amount?: T;
   privateNote?: T;
+  isAnonymized?: T;
   updatedAt?: T;
   createdAt?: T;
 }

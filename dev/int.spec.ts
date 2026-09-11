@@ -122,6 +122,9 @@ describe('Plugin integration tests', () => {
       name: expect.stringMatching(/^Anonymous User [0-9a-f]{8}$/),
       phone: null,
     })
+    // The anonymization job marks the processed documents as anonymized
+    expect((anonymizedUser as { isAnonymized?: boolean }).isAnonymized).toBe(true)
+    expect((anonymizedCreditCard as { isAnonymized?: boolean }).isAnonymized).toBe(true)
     expect(anonymizedAddress).toMatchObject({
       addressLine1: null,
       city: null,
@@ -217,5 +220,54 @@ describe('Plugin integration tests', () => {
         user: regularUser,
       }),
     ).rejects.toThrow()
+  })
+
+  test('anonymized documents are hidden from reads unless isAnonymized is false/undefined', async () => {
+    const target = await createUser(['user'], 'masked')
+
+    // The injected checkbox defaults to false
+    expect((target as { isAnonymized?: boolean }).isAnonymized).toBe(false)
+
+    // A non-anonymized document is readable with access control enforced
+    const readable = await payload.findByID({
+      collection: 'users',
+      id: target.id,
+      overrideAccess: false,
+    })
+    expect(readable.id).toBe(target.id)
+
+    // Flag the document as anonymized (only possible via admin/internal ops)
+    await payload.update({
+      collection: 'users',
+      id: target.id,
+      data: { isAnonymized: true },
+      overrideAccess: true,
+    })
+
+    // It must NOT be readable while access control is enforced
+    await expect(
+      payload.findByID({
+        collection: 'users',
+        id: target.id,
+        overrideAccess: false,
+      }),
+    ).rejects.toThrow()
+
+    // Documents missing the flag (undefined) stay readable
+    const address = await payload.create({
+      collection: 'user-addresses',
+      data: {
+        addressLine1: '1 Main St',
+        city: 'Town',
+        postalCode: '00000',
+        user: target.id,
+      },
+    })
+    const addressRead = await payload.findByID({
+      collection: 'user-addresses',
+      id: address.id,
+      overrideAccess: false,
+    })
+    expect(addressRead.addressLine1).toBe('1 Main St')
   })
 })
