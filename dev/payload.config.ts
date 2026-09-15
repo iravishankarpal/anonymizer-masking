@@ -8,8 +8,8 @@ import { fileURLToPath } from 'url'
 
 import { testEmailAdapter } from './helpers/testEmailAdapter.js'
 import { seed } from './seed.js'
-import { anonymizerMasking } from 'anonymizer-masking'
-import { adminOnly } from 'adminOnly'
+import { anonymizerMasking } from '../src/index.js'
+import { adminOnly } from './adminOnly.js'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)

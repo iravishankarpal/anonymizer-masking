@@ -262,7 +262,6 @@ export interface Media {
 export interface AnonymizationRequest {
   id: number;
   user: number | User;
-  requestedBy?: (number | null) | User;
   status: 'pending' | 'approved' | 'processing' | 'completed' | 'rejected';
   approvedBy?: (number | null) | User;
   anonymizedRecord?: (number | null) | AnonymizedIdentity;
@@ -647,7 +646,6 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface AnonymizationRequestsSelect<T extends boolean = true> {
   user?: T;
-  requestedBy?: T;
   status?: T;
   approvedBy?: T;
   anonymizedRecord?: T;

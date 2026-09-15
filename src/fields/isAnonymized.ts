@@ -24,7 +24,7 @@ export const createIsAnonymizedField = (defaultAdmin: Access): CheckboxField => 
         position: 'sidebar',
     },
     access: {
-        create: defaultAdmin,
-        update: defaultAdmin,
+        create: async (args) => Boolean(await defaultAdmin(args)),
+        update: async (args) => Boolean(await defaultAdmin(args)),
     },
 })
