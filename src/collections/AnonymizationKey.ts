@@ -1,6 +1,6 @@
 import type { Access, CollectionConfig } from 'payload'
 
-import { adminOnly } from '../access/adminOnly.js'
+import { adminOnly } from '../../dev/adminOnly.js'
 
 export const createAnonymizationKeyCollection = (
     defaultAdmin: Access = adminOnly,

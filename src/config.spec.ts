@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import type { Access, CollectionConfig, Config } from 'payload'
 
-import { adminOnly, authenticated } from './access/adminOnly.js'
+import { adminOnly, authenticated } from '../dev/adminOnly.js'
 import { createAnonymizationRequestsCollection } from './collections/AnonymizationRequests.js'
 import { createAnonymizationLogsCollection } from './collections/AnonymizationLogs.js'
 import { createAnonymizationKeyCollection } from './collections/AnonymizationKey.js'

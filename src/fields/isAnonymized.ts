@@ -1,6 +1,6 @@
 import type { Access, CheckboxField } from 'payload'
 
-import { adminOnly } from '../access/adminOnly.js'
+import { adminOnly } from '../../dev/adminOnly.js'
 
 /**
  * Builds the `isAnonymized` checkbox field injected into every configured

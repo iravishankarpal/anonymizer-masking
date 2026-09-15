@@ -1,6 +1,6 @@
 import type { Access, CollectionConfig } from 'payload'
 
-import { adminOnly, authenticated } from '../access/adminOnly.js'
+import { adminOnly, authenticated } from '../../dev/adminOnly.js'
 
 /**
  * Per-operation access-control overrides for the plugin-managed

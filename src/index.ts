@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto'
 
 import type { Access, AccessResult, CheckboxField, CollectionConfig, Config } from 'payload'
 
-import { adminOnly } from './access/adminOnly.js'
+import { adminOnly } from '../dev/adminOnly.js'
 import { anonymizedRead } from './access/anonymizedRead.js'
 import { createAnonymizationRequestsCollection } from './collections/AnonymizationRequests.js'
 import type { AnonymizationRequestsConfig } from './collections/AnonymizationRequests.js'
@@ -16,7 +16,7 @@ import { createAnonymizeTask } from './tasks/anonymizeTask.js'
 
 // The default access-control helpers, re-exported so plugin consumers can use
 // them as the building block for their own `access.admin` implementation.
-export { adminOnly, authenticated } from './access/adminOnly.js'
+export { adminOnly, authenticated } from '../dev/adminOnly.js'
 export type {
   AnonymizationRequestsAccessConfig,
   AnonymizationRequestsConfig,
@@ -263,7 +263,7 @@ export const anonymizerMasking =
       if (typeof pluginOptions.jobs?.enabled === 'boolean') {
         // `enabled` is applied during config sanitization but isn't declared on
         // the raw `JobsConfig`, so cast to keep strict TS happy.
-        ;(config.jobs as { enabled?: boolean }).enabled = pluginOptions.jobs.enabled
+        ; (config.jobs as { enabled?: boolean }).enabled = pluginOptions.jobs.enabled
       }
 
       // The auto-run cron is fully configurable via the plugin options.
