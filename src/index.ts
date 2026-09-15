@@ -2,7 +2,6 @@ import { randomBytes } from 'node:crypto'
 
 import type { Access, AccessResult, CheckboxField, CollectionConfig, Config } from 'payload'
 
-import { adminOnly } from '../dev/adminOnly.js'
 import { anonymizedRead } from './access/anonymizedRead.js'
 import { createAnonymizationRequestsCollection } from './collections/AnonymizationRequests.js'
 import type { AnonymizationRequestsConfig } from './collections/AnonymizationRequests.js'
@@ -16,7 +15,6 @@ import { createAnonymizeTask } from './tasks/anonymizeTask.js'
 
 // The default access-control helpers, re-exported so plugin consumers can use
 // them as the building block for their own `access.admin` implementation.
-export { adminOnly, authenticated } from '../dev/adminOnly.js'
 export type {
   AnonymizationRequestsAccessConfig,
   AnonymizationRequestsConfig,
@@ -213,7 +211,7 @@ export const anonymizerMasking =
       // registers. When omitted we fall back to the built-in role check, but
       // nothing is hard-coded: consumers can pass their own implementation
       // (e.g. from a gatekeeper plugin) via `access.admin`.
-      const adminAccess = pluginOptions.access?.admin ?? adminOnly
+      const adminAccess = pluginOptions.access?.admin
 
       const anonymizationRequests = createAnonymizationRequestsCollection(
         pluginOptions.requests,

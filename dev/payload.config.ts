@@ -2,13 +2,14 @@ import { postgresAdapter } from '@payloadcms/db-postgres'
 
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
-import { adminOnly, anonymizerMasking } from 'anonymizer-masking'
 import { buildConfig } from 'payload'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 
 import { testEmailAdapter } from './helpers/testEmailAdapter.js'
 import { seed } from './seed.js'
+import { anonymizerMasking } from 'anonymizer-masking'
+import { adminOnly } from 'adminOnly'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
