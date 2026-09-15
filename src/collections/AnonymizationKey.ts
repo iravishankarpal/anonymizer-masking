@@ -1,16 +1,14 @@
 import type { Access, CollectionConfig } from 'payload'
 
-import { adminOnly } from '../../dev/adminOnly.js'
-
 export const createAnonymizationKeyCollection = (
-    defaultAdmin: Access = adminOnly,
+    defaultAdmin: Access,
 ): CollectionConfig => ({
     slug: 'anonymization-key',
     admin: {
         hidden: true,
     },
     access: {
-        admin: defaultAdmin,
+        admin: async (args) => Boolean(await defaultAdmin(args)),
         create: () => false,
         delete: () => false,
         read: () => false,

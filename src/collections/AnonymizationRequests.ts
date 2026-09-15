@@ -1,6 +1,7 @@
 import type { Access, CollectionConfig } from 'payload'
 
-import { adminOnly, authenticated } from '../../dev/adminOnly.js'
+/** Any logged-in user may submit an anonymization request. */
+const authenticated: Access = ({ req }) => Boolean(req.user)
 
 /**
  * Per-operation access-control overrides for the plugin-managed
@@ -50,7 +51,7 @@ export type AnonymizationRequestsConfig = {
 
 export const createAnonymizationRequestsCollection = (
     config: AnonymizationRequestsConfig = {},
-    defaultAdmin: Access = adminOnly,
+    defaultAdmin: Access,
 ): CollectionConfig => {
     const { access = {}, approvedByRelationTo = 'users', userRelationTo = 'users' } = config
     const admin = access.admin ?? defaultAdmin
@@ -62,7 +63,7 @@ export const createAnonymizationRequestsCollection = (
             useAsTitle: 'status',
         },
         access: {
-            admin,
+            admin: async (args) => Boolean(await admin(args)),
             create: access.create ?? authenticated,
             delete: access.delete ?? admin,
             read: access.read ?? admin,

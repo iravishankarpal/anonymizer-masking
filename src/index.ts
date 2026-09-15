@@ -107,13 +107,11 @@ export type AnonymizerMaskingAccessConfig = {
    * - `anonymization-logs` and `anonymization-key` — every operation
    * - the injected `isAnonymized` checkbox field (`create` / `update`)
    *
-   * Defaults to the built-in `adminOnly` (checks `req.user.roles` for
-   * `'admin'`). The default is intentionally NOT hard-coded into the
-   * collections: swap in any `Access` function here — e.g. one exported by a
-   * gatekeeper plugin, or your own RBAC check — and every admin-gated
-   * operation the plugin registers will honor it.
+   * This is **required** — provide your own `Access` function (e.g. one
+   * exported by a gatekeeper plugin, or your own RBAC check) and every
+   * admin-gated operation the plugin registers will honor it.
    */
-  admin?: Access
+  admin: Access
 }
 
 export type AnonymizerMaskingConfig = {
@@ -127,10 +125,10 @@ export type AnonymizerMaskingConfig = {
    */
   requests?: AnonymizationRequestsConfig
   /**
-   * Custom access control used by the plugin for admin-gated resources and
-   * fields.
+   * Access control used by the plugin for admin-gated resources and fields.
+   * Must include an `admin` Access function.
    */
-  access?: AnonymizerMaskingAccessConfig
+  access: AnonymizerMaskingAccessConfig
   disabled?: boolean
 }
 
@@ -208,10 +206,9 @@ export const anonymizerMasking =
       // No validation needed - encryption is optional when metadata is enabled
 
       // The admin access function used across every resource the plugin
-      // registers. When omitted we fall back to the built-in role check, but
-      // nothing is hard-coded: consumers can pass their own implementation
-      // (e.g. from a gatekeeper plugin) via `access.admin`.
-      const adminAccess = pluginOptions.access?.admin
+      // registers. Consumers must provide their own implementation via
+      // `access.admin`.
+      const adminAccess = pluginOptions.access.admin
 
       const anonymizationRequests = createAnonymizationRequestsCollection(
         pluginOptions.requests,

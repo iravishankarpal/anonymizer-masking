@@ -16,7 +16,7 @@ const findField = (collection: CollectionConfig, name: string) =>
 
 describe('anonymizer-masking configurable fields & access', () => {
   test('defaults `user` and `approvedBy` relationship fields to the users collection', () => {
-    const collection = createAnonymizationRequestsCollection()
+    const collection = createAnonymizationRequestsCollection({}, adminOnly)
 
     expect(findField(collection, 'user')).toMatchObject({
       name: 'user',
@@ -64,7 +64,7 @@ describe('anonymizer-masking configurable fields & access', () => {
     const allowAll: Access = () => true
     const collection = createAnonymizationRequestsCollection({
       access: { create: allowAll, read: allowAll },
-    })
+    }, adminOnly)
 
     expect(collection.access?.create).toBe(allowAll)
     expect(collection.access?.read).toBe(allowAll)
@@ -79,10 +79,6 @@ describe('anonymizer-masking configurable fields & access', () => {
     expect(createAnonymizationKeyCollection(gatekeeperAdmin).access?.admin).toBe(gatekeeperAdmin)
     expect(createIsAnonymizedField(gatekeeperAdmin).access?.create).toBe(gatekeeperAdmin)
     expect(createIsAnonymizedField(gatekeeperAdmin).access?.update).toBe(gatekeeperAdmin)
-
-    // Passing no admin keeps the built-in default.
-    expect(createAnonymizationLogsCollection().access?.read).toBe(adminOnly)
-    expect(createIsAnonymizedField().access?.create).toBe(adminOnly)
   })
 
   test('wires every configured option through the plugin entry point', () => {

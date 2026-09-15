@@ -1,9 +1,7 @@
 import type { Access, CollectionConfig } from 'payload'
 
-import { adminOnly } from '../../dev/adminOnly.js'
-
 export const createAnonymizationLogsCollection = (
-    defaultAdmin: Access = adminOnly,
+    defaultAdmin: Access,
 ): CollectionConfig => ({
     slug: 'anonymization-logs',
     admin: {
@@ -11,11 +9,11 @@ export const createAnonymizationLogsCollection = (
         useAsTitle: 'status',
     },
     access: {
-        admin: defaultAdmin,
-        create: defaultAdmin,
-        delete: defaultAdmin,
-        read: defaultAdmin,
-        update: defaultAdmin,
+        admin: async (args) => Boolean(await defaultAdmin(args)),
+        create: async (args) => Boolean(await defaultAdmin(args)),
+        delete: async (args) => Boolean(await defaultAdmin(args)),
+        read: async (args) => Boolean(await defaultAdmin(args)),
+        update: async (args) => Boolean(await defaultAdmin(args)),
     },
     fields: [
         {

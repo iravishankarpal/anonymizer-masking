@@ -1,7 +1,5 @@
 import type { Access, CheckboxField } from 'payload'
 
-import { adminOnly } from '../../dev/adminOnly.js'
-
 /**
  * Builds the `isAnonymized` checkbox field injected into every configured
  * collection.
@@ -13,10 +11,10 @@ import { adminOnly } from '../../dev/adminOnly.js'
  *   unless `overrideAccess` is set).
  *
  * The admin gate is not hard-coded: it accepts the plugin's configured
- * `access.admin` function (defaulting to the built-in `adminOnly`) so a
- * gatekeeper plugin or custom RBAC is honored here as well.
+ * `access.admin` function so a gatekeeper plugin or custom RBAC is honored
+ * here as well.
  */
-export const createIsAnonymizedField = (defaultAdmin: Access = adminOnly): CheckboxField => ({
+export const createIsAnonymizedField = (defaultAdmin: Access): CheckboxField => ({
     name: 'isAnonymized',
     type: 'checkbox',
     label: 'Anonymized?',
