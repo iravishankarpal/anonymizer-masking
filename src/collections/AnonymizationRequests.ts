@@ -1,4 +1,4 @@
-import type { Access, CollectionConfig } from 'payload'
+import type { Access, CollectionConfig, CollectionSlug } from 'payload'
 
 /** Any logged-in user may submit an anonymization request. */
 const authenticated: Access = ({ req }) => Boolean(req.user)
@@ -73,7 +73,7 @@ export const createAnonymizationRequestsCollection = (
             {
                 name: 'user',
                 type: 'relationship',
-                relationTo: userRelationTo,
+                relationTo: userRelationTo as CollectionSlug,
                 required: true,
             },
             {
@@ -86,7 +86,7 @@ export const createAnonymizationRequestsCollection = (
             {
                 name: 'approvedBy',
                 type: 'relationship',
-                relationTo: approvedByRelationTo,
+                relationTo: approvedByRelationTo as CollectionSlug,
             },
             {
                 name: 'anonymizedRecord',
