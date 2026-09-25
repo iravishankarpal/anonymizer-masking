@@ -9,7 +9,6 @@ const dirname = path.dirname(filename)
 
 export default defineConfig(() => {
   loadEnv(path.resolve(dirname, './dev'))
-
   return {
     plugins: [
       tsconfigPaths({
