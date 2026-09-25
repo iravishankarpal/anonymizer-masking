@@ -1,6 +1,6 @@
 {
   "name": "@payload-pln/anonymizer-masking",
-  "version": "1.0.2",
+  "version": "1.0.0",
   "description": "A blank template to get started with Payload 3.0",
   "license": "MIT",
   "type": "module",
