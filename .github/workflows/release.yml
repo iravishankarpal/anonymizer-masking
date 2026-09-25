@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write          # create tags & releases
+  issues: write            # comment on issues
+  pull-requests: write     # comment on PRs
+  id-token: write          # npm provenance / OIDC
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    # Only run on main and after CI would pass (you can also make it need the CI job)
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # required for semantic-release
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          # Must be pnpm v11 to match the local toolchain and the v11-only
+          # `allowBuilds` syntax in pnpm-workspace.yaml (pnpm 9 rejects that file).
+          version: 11.24.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # Why `NODE_AUTH_TOKEN` is required here (both steps below):
+      #
+      # `actions/setup-node` with `registry-url` writes $RUNNER_TEMP/.npmrc containing
+      #   //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+      # exports `NPM_CONFIG_USERCONFIG` pointing at that file, and when
+      # `NODE_AUTH_TOKEN` is not already set in the environment it exports it as the
+      # dummy value "XXXXX-XXXXX-XXXXX-XXXXX" (see actions/setup-node src/authutil.ts).
+      #
+      # `@semantic-release/npm` reuses any token it finds in the existing npm config
+      # and only falls back to `NPM_TOKEN` when it finds none
+      # (lib/set-npmrc-auth.js: `if (getAuthToken(registry, { npmrc })) return;`).
+      # So the dummy setup-node token used to win over the real `NPM_TOKEN` secret and
+      # the run failed in lib/verify-auth.js (`npm whoami`) with EINVALIDNPMTOKEN.
+      # Exporting the secret as `NODE_AUTH_TOKEN` makes the generated .npmrc resolve
+      # to the real token and keeps `NPM_TOKEN` for the fallback path.
+      - name: Verify npm authentication
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm whoami --registry https://registry.npmjs.org
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Fallback consumed by @semantic-release/npm when the npm userconfig
+          # happens to contain no token (see the comment above).
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # The token setup-node's generated $RUNNER_TEMP/.npmrc actually resolves.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
+
+
