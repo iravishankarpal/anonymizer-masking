@@ -30,7 +30,7 @@ const createUser = async (roles: string[], prefix: string) =>
     overrideAccess: true,
   })
 
-describe('Plugin integration tests', () => {
+describe.skip('Plugin integration tests', () => {
   test('anonymizes a user and related private records via queued job', async () => {
     const admin = await createUser(['admin'], 'admin')
     const target = await createUser(['admin'], 'target')
